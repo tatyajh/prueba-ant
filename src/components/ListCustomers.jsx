@@ -3,7 +3,7 @@ import { Container, Row } from "react-bootstrap";
 import CardUsers from "./CardUsers";
 
 const ListCustomers = () => {
-  const url = "https://jsonplaceholder.typicode.com/users";
+  const url = "http://localhost:3004/users";
   const [list, setUsers] = useState();
   const fetchApi = async () => {
     const response = await fetch(url);
@@ -32,4 +32,3 @@ const ListCustomers = () => {
 };
 
 export default ListCustomers;
-
