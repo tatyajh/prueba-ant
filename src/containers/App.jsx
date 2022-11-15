@@ -5,7 +5,7 @@ import ListCustomers from "../components/ListCustomers";
 const App = () => {
     return (
       <Container>
-        <h1 className="text-center">LIST</h1>
+        <h1 className="text-center">USERS LIST</h1>
         <ListCustomers />
        </Container>
     );

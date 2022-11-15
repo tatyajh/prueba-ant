@@ -1,33 +1,35 @@
-import React, {useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { Container, Row } from "react-bootstrap";
+import CardUsers from "./CardUsers";
 
 const ListCustomers = () => {
-    
-    const url = 'https://jsonplaceholder.typicode.com/users'
-    const [users, setUsers] = useState()
-    const fetchApi = async () => {
-        const response = await fetch(url)
-        console.log(response.status)
-        const responseJSON = await response.json()
-        setUsers(responseJSON)
-       
-    }
-    useEffect(() => {
-        fetchApi()
-    }, [])
+  const url = "https://jsonplaceholder.typicode.com/users";
+  const [list, setUsers] = useState();
+  const fetchApi = async () => {
+    const response = await fetch(url);
+    console.log(response.status);
+    const responseJSON = await response.json();
+    setUsers(responseJSON);
+  };
+  useEffect(() => {
+    fetchApi();
+  }, []);
 
-    return(
-       <div>
-        Listado de clientes
-        <ul>
-            { !users ? 'Cargando...' :
-                users.map((user,index)=>{
-                    return <li key={index}>{user.name}</li>
-                })
-            }
-        </ul>
-       </div>
-    );
+  return (
+    <Container className = "mb-5">
+       <Row>
+        {!list
+          ? "Cargando..."
+          : list.map((users, index) => (
+                <CardUsers
+                    key={index}
+                    users= {users}
+                />
+            ))}
+      </Row>
+    </Container>
+  );
+};
 
-}
+export default ListCustomers;
 
-export default ListCustomers; 
