@@ -26,7 +26,8 @@ const CardUsers = ({ users, setUpdateList, updateList, handleCloseModal, handleO
            
             axios.delete(`${url}/${users.id}`).then((response) => {
              console.log(response)
-              if (response.data === "User registered succesfully.") {                   Swal.fire(
+              if (response.status === 200) {                  
+                 Swal.fire(
                         'Deleted!',
                         `${users.name} register deleted!`,
                         'success'

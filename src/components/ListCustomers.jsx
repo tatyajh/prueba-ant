@@ -30,9 +30,11 @@ const ListCustomers = () => {
     website: "",
     company: { name: "", catchPhrase: "", bs: "" },
   });
+
   const handleCloseModal = () => {
     setShowModal(false);
   };
+  
   const handleOpenModal = () => {
     setShowModal(true);
   };
