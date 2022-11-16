@@ -1,14 +1,22 @@
 import React, { useState } from "react";
 import { Container, Form } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const NewCustomer = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState({
     name: "",
     username: "",
     email: "",
-    address: { street: "", suite: "", city: "", zipcode: "" },
-    geo: { lat: "", lng: "" },
+    address: {
+      street: "",
+      suite: "",
+      city: "",
+      zipcode: "",
+      geo: { lat: "", lng: "" },
+    },
     phone: "",
     website: "",
     company: { name: "", catchPhrase: "", bs: "" },
@@ -26,17 +34,10 @@ const NewCustomer = () => {
       ...data,
       address: {
         ...data.address,
-        [target.name]: target.value,
-      },
-    });
-  };
-
-  const handleGeoChange = ({ target }) => {
-    setData({
-      ...data,
-      geo: {
-        ...data.geo,
-        [target.name]: target.value,
+        geo: {
+          ...data.address.geo,
+          [target.name]: target.value,
+        },
       },
     });
   };
@@ -55,13 +56,19 @@ const NewCustomer = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await axios.post(
-      URL,
-      data,
-      data.address,
-      data.geo,
-      data.company
-    );
+    const response = await axios.post(URL, data);
+    if (response.status=== 200) {
+      Swal.fire('Saved', 
+                'User registered succesfully.', 
+                 'success'
+      )
+      navigate("/", { replace: true });
+    } else {
+       Swal.fire('Error',
+                 'User no registered', 
+                 'error'
+       )
+    }
     console.log(response);
   };
 
@@ -132,7 +139,7 @@ const NewCustomer = () => {
             />
           </Form.Group>
 
-          <Form.Group className="mb-5">
+          <Form.Group className="mb-3">
             <Form.Control
               type="number"
               name="zipcode"
@@ -143,13 +150,12 @@ const NewCustomer = () => {
           </Form.Group>
 
           <Form.Group className="mb-3">
-            <div className="text-center">Geo</div>
             <Form.Control
               type="text"
               name="lat"
               placeholder="Latitude"
-              value={data.geo.lat}
-              onChange={handleGeoChange}
+              value={data.address.geo.lat}
+              onChange={handleAddressChange}
             />
           </Form.Group>
 
@@ -158,8 +164,8 @@ const NewCustomer = () => {
               type="text"
               name="lng"
               placeholder="Longitude"
-              value={data.geo.lng}
-              onChange={handleGeoChange}
+              value={data.address.geo.lng}
+              onChange={handleAddressChange}
             />
           </Form.Group>
 
