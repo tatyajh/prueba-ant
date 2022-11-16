@@ -2,7 +2,8 @@ import axios from "axios";
 import React from "react";
 import { Card, ListGroup, ListGroupItem } from "react-bootstrap";
 import Swal from "sweetalert2";
-import './styles/styles.css';
+
+import Gravatar from "react-gravatar";
 
 const CardUsers = ({ users, setUpdateList, updateList, handleCloseModal, handleOpenModal, setDataModal }) => {
 
@@ -59,7 +60,10 @@ const handleEdit = () => {
         </Card.Title>
         <Card.Body>
           <ListGroup className="mb-3">
+          
+          <Gravatar email={users.email} size={350} rating="pg" default="monsterid" className="CustomAvatar-image"           /> 
             <ListGroupItem>
+           
               <strong>E-MAIL: </strong>
               {users.email}
             </ListGroupItem>
