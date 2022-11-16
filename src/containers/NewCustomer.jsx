@@ -34,6 +34,16 @@ const NewCustomer = () => {
       ...data,
       address: {
         ...data.address,
+        [target.name]: target.value,
+      },
+    });
+  };
+
+  const handleAddressGeoChange = ({ target }) => {
+    setData({
+      ...data,
+      address: {
+        ...data.address,
         geo: {
           ...data.address.geo,
           [target.name]: target.value,
@@ -41,7 +51,6 @@ const NewCustomer = () => {
       },
     });
   };
-
   const handleCompanyChange = ({ target }) => {
     setData({
       ...data,
@@ -57,17 +66,11 @@ const NewCustomer = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const response = await axios.post(URL, data);
-    if (response.status=== 200) {
-      Swal.fire('Saved', 
-                'User registered succesfully.', 
-                 'success'
-      )
+    if (response.status === 200) {
+      Swal.fire("Saved", "User registered succesfully.", "success");
       navigate("/", { replace: true });
     } else {
-       Swal.fire('Error',
-                 'User no registered', 
-                 'error'
-       )
+      Swal.fire("Error", "User no registered", "error");
     }
     console.log(response);
   };
@@ -155,7 +158,7 @@ const NewCustomer = () => {
               name="lat"
               placeholder="Latitude"
               value={data.address.geo.lat}
-              onChange={handleAddressChange}
+              onChange={handleAddressGeoChange}
             />
           </Form.Group>
 
@@ -165,7 +168,7 @@ const NewCustomer = () => {
               name="lng"
               placeholder="Longitude"
               value={data.address.geo.lng}
-              onChange={handleAddressChange}
+              onChange={handleAddressGeoChange}
             />
           </Form.Group>
 

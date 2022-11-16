@@ -49,6 +49,16 @@ const ListCustomers = () => {
       ...dataModal,
       address: {
         ...dataModal.address,
+        [target.name]: target.value,
+      },
+    });
+  };
+
+  const handleChangeModalGeoAddress = ({ target }) => {
+    setDataModal({
+      ...dataModal,
+      address: {
+        ...dataModal.address,
         geo: {
           ...dataModal.address.geo,
           [target.name]: target.value,
@@ -67,25 +77,17 @@ const ListCustomers = () => {
     });
   };
 
-  const handleSubmit = async (e) =>{
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await axios.put(`${url}/${dataModal.id}`, dataModal)
+    const response = await axios.put(`${url}/${dataModal.id}`, dataModal);
     if (response.status === 200) {
-      Swal.fire(
-        'Saved', 
-        'User updated succesfully.', 
-         'success'
-      )
+      Swal.fire("Saved", "User updated succesfully.", "success");
       handleCloseModal();
-      setUpdateList(!updateList)
-  }else {
-      Swal.fire(
-        'Error',
-        'User no updated', 
-        'error'
-      )
-  }
-}
+      setUpdateList(!updateList);
+    } else {
+      Swal.fire("Error", "User no updated", "error");
+    }
+  };
 
   useEffect(() => {
     getData().then((response) => {
@@ -117,9 +119,7 @@ const ListCustomers = () => {
         <Modal.Header closeButton>
           <Modal.Title> Update </Modal.Title>
         </Modal.Header>
-        <Form
-          onSubmit={handleSubmit}
-        >
+        <Form onSubmit={handleSubmit}>
           <Modal.Body>
             <Form.Group className="mb-3">
               <Form.Control
@@ -199,7 +199,7 @@ const ListCustomers = () => {
                 name="lat"
                 placeholder="Latitude"
                 value={dataModal.address.geo.lat}
-                onChange={handleChangeModalAddress}
+                onChange={handleChangeModalGeoAddress}
               />
             </Form.Group>
 
@@ -209,7 +209,7 @@ const ListCustomers = () => {
                 name="lng"
                 placeholder="Longitude"
                 value={dataModal.address.geo.lng}
-                onChange={handleChangeModalAddress}
+                onChange={handleChangeModalGeoAddress}
               />
             </Form.Group>
 
