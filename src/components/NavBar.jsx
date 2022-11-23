@@ -1,175 +1,136 @@
-import {React, Component} from "react";
+import { React, useEffect, useState, useCallback } from "react";
 import { Container, Nav, Navbar } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Web3 from "web3";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-import { pMinify, resumedAddress, _error, isConnected } from "../services/Utiles";
-import commaNumber from "comma-number";
+import {
+  pMinify,
+  resumedAddress,
+  _error,
+  isConnected,
+} from "../services/Utiles";
+//import commaNumber from "comma-number";
 import BNBHelper from "../services/BnbHelper";
+import { useNavigate } from "react-router-dom";
 
-class NavBar extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      account: undefined,
-      bnb_balance: undefined,
-    };
-  }
+const providerOptions = {
+  walletconnect: {
+    package: WalletConnectProvider,
+    options: {
+      rpc: {
+        56: "https://bsc-dataseed.binance.org",
+      },
+      network: "binance",
+    },
+  },
+};
 
-  resetState() {
-    this.setState({
-      account: undefined,
-      bnb_balance: undefined,
-    });
-  }
+const web3Options = {
+  cacheProvider: true,
+  providerOptions,
+};
 
-  async connect() {
+const NavBar = () => {
+  const navigation = useNavigate();
+  const [account, setAccount] = useState();
+  const [bnbBalance, setBnbBalance] = useState();
+  const [provider, setProvider] = useState();
+  const [web3, setWeb3] = useState();
+  const [bnbHelper, setBnbHelper] = useState();
+  const [web3Modal] = useState(new Web3Modal(web3Options));
+
+  const resetState = () => {
+    console.log("resetState");
+    setAccount(undefined);
+    setBnbBalance(undefined);
+  };
+
+  const dropState = () => {
+    console.log("dropState");
+    localStorage.clear();
+  };
+
+  const getAccount = useCallback(async () => {
+    const _account = (await web3.eth.getAccounts())[0];
+    return _account ? _account.toLowerCase() : undefined;
+  }, [web3?.eth]);
+
+  const disconnect = useCallback(async () => {
+    console.log("disconnect");
     try {
-      this.provider = await this.web3Modal.connect();
+      dropState();
+      resetState();
+    } catch (errr) {
+      if (provider.close) {
+        await provider.close();
+        await web3Modal.clearCachedProvider();
+        setProvider(null);
+      }
+    }
+
+    navigation("/login");
+  }, [navigation, provider, web3Modal]);
+
+  const connect = useCallback(async () => {
+    console.log("Connect");
+    let _provider;
+    try {
+      _provider = await web3Modal.connect();
+      setProvider(_provider);
     } catch (er) {
       _error("Conéctate a Binance Smart Chain");
-      this.disconnect();
+      disconnect();
       return;
     }
 
-    this._web3 = new Web3(this.provider);
-    this._bnb = new BNBHelper(this._web3);
-    this.setState(
-      {
-        account: await this.getAccount(),
-      },
-      () => {
-        if (this.state.account) this.load();
-      }
-    );
+    const _web3 = new Web3(_provider);
+    const _bnbHelper = new BNBHelper(_web3);
+    setWeb3(_web3);
+    setBnbHelper(_bnbHelper);
+    setAccount(await getAccount());
+  }, [disconnect, getAccount, web3Modal]);
 
-    this.provider.on("accountsChanged", (accounts) => {
-      this.fetchAccounts(accounts);
-    });
+  // const _fetchAccounts = useCallback(async () => {
+  //   dropState();
+  //   resetState();
+  //   const account = await getAccount();
+  //   if (account) {
+  //     setAccount(account);
+  //   }
+  // }, [getAccount]);
 
-    this.provider.on("networkChanged", (networkId) => {
-      if (networkId === "56") {
-        this.disconnect();
-        this.connect();
-      } else {
-        _error("Conéctate a Binance Smart Chain");
-        this.disconnect();
-      }
-    });
-
-    this.provider.on("disconnect", (error) => {
-      this.dropState();
-      this.resetState();
-    });
-  }
-
-  async _fetchAccounts() {
-    this.dropState();
-    this.resetState();
-    const account = await this.getAccount();
-    if (account) {
-      this.setState(
-        {
-          account,
-        },
-        () => this.load()
-      );
-    }
-  }
-
-  async fetchAccounts(accounts) {
-    this.dropState();
-    this.resetState();
+  const fetchAccounts = useCallback(async (accounts) => {
+    console.log("fetchAccounts");
+    dropState();
+    resetState();
     if (accounts.length > 0) {
-      const account = accounts[0].toLowerCase();
-      this.setState(
-        {
-          account,
-        },
-        () => this.load()
-      );
+      const _account = accounts[0].toLowerCase();
+      setAccount(_account);
     }
-  }
+  }, []);
 
-  async disconnect() {
-    try {
-      this.dropState();
-      this.resetState();
-    } catch (errr) {
-      if (this.provider.close) {
-        await this.provider.close();
-        await this.web3Modal.clearCachedProvider();
-        this.provider = null;
-      }
-    }
-
-    this.props.history.push("/login");
-  }
-
-  dropState() {
-    localStorage.clear();
-  }
-
-  async componentWillUnmount() {
-    this.resetState();
-  }
-
-  async initWeb3() {
-    const providerOptions = {
-      walletconnect: {
-        package: WalletConnectProvider,
-        options: {
-          rpc: {
-            56: "https://bsc-dataseed.binance.org",
-          },
-          network: "binance",
-        },
-      },
-    };
-    this.web3Modal = new Web3Modal({
-      cacheProvider: true,
-      providerOptions,
-    });
+  const initWeb3 = useCallback(() => {
+    console.log("initweb3");
     if (isConnected()) {
-      this.connect();
-    } else this.props.history.push("/login");
-  }
+      connect();
+    } else navigation("/login");
+  }, [connect, navigation]);
 
-  async componentDidMount() {
-    this.initWeb3();
-  }
+  const load = useCallback(async () => {
+    setBnbBalance(await bnbHelper.balance(account));
+  }, [bnbHelper, setBnbBalance, account]);
 
-  async load() {
-    this.setState(
-      {
-        bnb_balance: await this._bnb.balance(this.state.account),
-      },
-      () => {
-        localStorage.setItem("eth_connected", "y");
-        localStorage.setItem("account", this.state.account);
-        this.props.history.push("/");
-      }
-    );
-  }
+  // const commasFormat = (x) => {
+  //   return commaNumber(x);
+  // };
 
-  commasFormat(x) {
-    return commaNumber(x);
-  }
-
-  async getAccount() {
-    const account = (await this._web3.eth.getAccounts())[0];
-    return account ? account.toLowerCase() : undefined;
-  }
-
-  UserSpace() {
-    if (this.state.account)
+  const UserSpace = () => {
+    if (account)
       return (
         <>
-          <a
+          <button
             className="d-flex align-items-center nav-link dropdown-toggle dropdown-toggle-nocaret"
-            href="#"
-            role="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
           >
@@ -179,58 +140,96 @@ class NavBar extends Component {
               alt="user avatar"
             ></img>
             <div className="user-info ps-3">
-              <p className="user-name mb-0">
-                {resumedAddress(this.state.account)}
-              </p>
+              <p className="user-name mb-0">{resumedAddress(account)}</p>
               <p className="designattion mb-0">
-                <strong>{`${pMinify(this.state.bnb_balance, 4)}`} BNB</strong>
+                <strong>{`${pMinify(bnbBalance, 4)}`} BNB</strong>
               </p>
             </div>
-          </a>
+          </button>
           <ul className="dropdown-menu dropdown-menu-end">
             <li>
-              <a className="dropdown-item" onClick={() => this.disconnect()}>
+              <button className="dropdown-item" onClick={() => disconnect()}>
                 <i className="bx bx-log-out-circle"></i>
                 <span>Desconectarse</span>
-              </a>
+              </button>
             </li>
           </ul>
         </>
       );
     else {
-      return (
-        <button
-          onClick={() => this.connect()}
-          type="button"
-          className="btn btn-outline-dark  px-3 radius-30"
-        >
-          Conectarse
-        </button>
-      );
+      return <Nav.Link onClick={() => connect()}>Conectarse</Nav.Link>;
     }
-  }
-  render() {
-    return (
-      <>
-      <Navbar bg="dark" variant="dark">
-    <Container fluid>
-      <Link to="/" className="navbar-brand">
-        Home
-      </Link>
-      <Nav className="me-auto">
-        <Link to="/new" className="nav-link">
-          New
-        </Link>
-        <div className="user-box dropdown">{this.UserSpace()}</div>
-      </Nav>
-    </Container>
-  </Navbar>
-      </>
- 
-    
-     );
-  }
-}
+  };
 
+  useEffect(() => {
+    console.log(0);
+    return () => resetState();
+  }, []);
+
+  useEffect(() => {
+    console.log(1);
+    initWeb3();
+  }, [initWeb3]);
+
+  useEffect(() => {
+    console.log(2);
+    if (account) load();
+  }, [account, load]);
+
+  useEffect(() => {
+    console.log(3);
+    if (bnbBalance) {
+      localStorage.setItem("eth_connected", "y");
+      localStorage.setItem("account", account);
+      navigation("/");
+    }
+  }, [bnbBalance, account, navigation]);
+
+  useEffect(() => {
+    console.log(4);
+    if (provider) {
+      console.log("provider");
+      provider.on("accountsChanged", (accounts) => {
+        console.log("accountsChanged");
+        fetchAccounts(accounts);
+      });
+
+      provider.on("networkChanged", (networkId) => {
+        console.log("networkChanged");
+        if (networkId === "56") {
+          disconnect();
+          connect();
+        } else {
+          _error("Conéctate a Binance Smart Chain");
+          disconnect();
+        }
+      });
+
+      provider.on("disconnect", (error) => {
+        console.log("onDisconnect");
+        dropState();
+        resetState();
+      });
+    }
+  }, [provider, connect, disconnect, fetchAccounts]);
+
+  return (
+    <>
+      <Navbar bg="dark" variant="dark">
+        <Container fluid>
+          <Link to="/" className="navbar-brand">
+            Home
+          </Link>
+          <Nav className="me-auto">
+            <Link to="/new" className="nav-link">
+              New
+            </Link>
+            {UserSpace()}
+          </Nav>
+        </Container>
+      </Navbar>
+    </>
+  );
+};
 
 export default NavBar;
